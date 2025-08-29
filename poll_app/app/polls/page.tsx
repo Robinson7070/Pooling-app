@@ -1,9 +1,24 @@
 "use client";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../../lib/authContext";
+import { useEffect } from "react";
 import { Card, CardContent, CardHeader } from "../../components/ui/card";
 import { usePollContext } from "../../lib/pollContext";
 
 export default function PollsPage() {
-  const { polls, vote, user } = usePollContext();
+  const { polls, vote } = usePollContext();
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/auth");
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+  }
   return (
     <div className="flex flex-col items-center min-h-screen py-10">
       <h2 className="text-2xl font-bold mb-6">Polls Dashboard</h2>
