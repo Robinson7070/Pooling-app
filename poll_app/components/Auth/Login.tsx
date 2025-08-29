@@ -1,29 +1,29 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { useRouter } from 'next/navigation'
+import { usePollContext } from '@/lib/pollContext'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
-
+  const { login } = usePollContext()
+  const router = useRouter()
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-      if (error) {
-        setError(error.message)
+      // Using mock login from pollContext instead of Supabase
+      if (email && password) {
+        login(email)
+        router.push('/polls')
       } else {
-        // Redirect or update UI
-        window.location.href = '/polls'
+        setError('Please enter both email and password')
       }
-    } catch (error: any) {
-      setError(error.message)
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+      setError(errorMessage);
     }
   }
 

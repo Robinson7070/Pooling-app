@@ -6,6 +6,7 @@ import {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
 } from 'react'
 import { Session, User } from '@supabase/supabase-js'
 import { supabase } from './supabaseClient'
@@ -27,14 +28,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const getSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      setSession(session)
-      setUser(session?.user || null)
-      setLoading(false)
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession()
+        if (error) throw error
+        setSession(session)
+        setUser(session?.user ?? null)
+      } catch (e) {
+        console.error('supabase.auth.getSession() failed', e)
+        setSession(null)
+        setUser(null)
+      } finally {
+        setLoading(false)
+      }
     }
-
     getSession()
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
@@ -53,12 +62,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [router])
 
-  const signOut = async () => {
-    await supabase.auth.signOut()
-    setUser(null)
-    setSession(null)
-    router.push('/auth')
-  }
+  const signOut = useCallback(async () => {
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+    } catch (e) {
+      console.error('supabase.auth.signOut() failed', e)
+    } finally {
+      setUser(null)
+      setSession(null)
+    }
+  }, [])
 
   return (
     <AuthContext.Provider value={{ user, session, signOut }}>

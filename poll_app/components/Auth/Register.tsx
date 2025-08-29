@@ -1,30 +1,39 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { useRouter } from 'next/navigation'
+import { usePollContext } from '@/lib/pollContext'
 
 export default function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const { login } = usePollContext()
+  const router = useRouter()
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setSuccess(null)
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      })
-      if (error) {
-        setError(error.message)
+      // Using mock registration
+      if (email && password && password.length >= 6) {
+        // Simulate successful registration
+        setSuccess('Registration successful!')
+        // Auto-login after registration
+        setTimeout(() => {
+          login(email)
+          router.push('/polls')
+        }, 1500)
+      } else if (!email || !password) {
+        setError('Please enter both email and password')
       } else {
-        setSuccess('Registration successful! Please check your email to confirm.')
+        setError('Password must be at least 6 characters')
       }
-    } catch (error: any) {
-      setError(error.message)
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+      setError(errorMessage);
     }
   }
 

@@ -1,19 +1,18 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../lib/authContext";
 import { Card, CardContent, CardHeader } from "../../components/ui/card";
 import { usePollContext } from "../../lib/pollContext";
 import { useState, useEffect, useMemo } from "react";
 
 export default function CreatePollPage() {
-  const { createPoll } = usePollContext();
-  const { user, loading } = useAuth();
+  const { createPoll, user } = usePollContext();
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [options, setOptions] = useState(["", ""]);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Validation states
   const [titleError, setTitleError] = useState<string | null>(null);
@@ -29,16 +28,22 @@ export default function CreatePollPage() {
   const MAX_OPTIONS = 10;
 
   useEffect(() => {
-    if (!loading && !user) {
+    // Only redirect if we're certain there's no user (not just loading)
+    if (user === null) {
       router.push("/auth");
+      return;
     }
-  }, [user, loading, router]);
+    // Only finish loading once the user context is resolved
+    if (user !== undefined) {
+      setLoading(false);
+    }
+  }, [user, router]);
 
   // Derived state for form validity
   const isFormValid = useMemo(() => {
     const isTitleValid = title.length >= TITLE_MIN_LENGTH && title.length <= TITLE_MAX_LENGTH;
     const areOptionsValid = options.length >= MIN_OPTIONS && options.every(
-      (opt, idx) => opt.length >= OPTION_MIN_LENGTH && opt.length <= OPTION_MAX_LENGTH && opt.trim() !== ""
+      (opt) => opt.length >= OPTION_MIN_LENGTH && opt.length <= OPTION_MAX_LENGTH && opt.trim() !== ""
     );
     return isTitleValid && areOptionsValid;
   }, [title, options]);
@@ -115,25 +120,41 @@ export default function CreatePollPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
-    setIsSubmitting(true);
 
-    // Re-validate all fields on submit
+    // Re-validate all fields to show errors
     validateField("title", title);
     validateField("description", description);
-    options.forEach((opt, idx) => validateField("option", opt, idx));
+    options.forEach((opt, idx) =>
+      validateField("option", opt, idx)
+    );
 
     if (!isFormValid) {
-      setMessage({ type: "error", text: "Please correct the errors in the form." });
-      setIsSubmitting(false);
+      setMessage({
+        type: "error",
+        text: "Please correct the errors in the form.",
+      });
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
-      await createPoll(title, description, options.filter(Boolean));
-      setMessage({ type: "success", text: "Poll created successfully!" });
+      await createPoll(
+        title,
+        description,
+        options.filter(Boolean)
+      );
+      setMessage({
+        type: "success",
+        text: "Poll created successfully!",
+      });
       handleClearForm(); // Clear form on successful submission
-    } catch (error: any) {
-      setMessage({ type: "error", text: `Failed to create poll: ${error.message}` });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+      setMessage({
+        type: "error",
+        text: `Failed to create poll: ${errorMessage}`,
+      });
     } finally {
       setIsSubmitting(false);
     }

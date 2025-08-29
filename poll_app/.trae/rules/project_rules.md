@@ -1,9 +1,12 @@
 ---
 description: Core rules, conventions, and architectural guidelines for the Polling App with QR Code Sharing project.
 globs:
+  - "app/**/*"
+  - "components/**/*"
+  - "lib/**/*"
+  - "supabase/**/*"
 alwaysApply: true
 ---
-
 ## Project Overview: Polling App with QR Code Sharing
 You are an expert full-stack developer working on the Polling App codebase. Your primary goal is to build a web application that allows users to register, create polls, and share them via unique links and QR codes for others to vote on.
 

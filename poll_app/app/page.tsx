@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader } from "../components/ui/card";
 import { usePollContext } from "../lib/pollContext";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Image from "next/image";
 
 export default function Home() {
   const { user, login, logout } = usePollContext();
@@ -10,6 +11,7 @@ export default function Home() {
   const [showLogin, setShowLogin] = useState(false);
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,7 +19,9 @@ export default function Home() {
       setMessage("Please enter your email.");
       return;
     }
+    setIsSubmitting(true);
     login(email);
+    setIsSubmitting(false);
     setShowLogin(false);
     setEmail("");
     setMessage("");
@@ -35,7 +39,7 @@ export default function Home() {
       <Card className="w-full max-w-lg shadow-2xl z-10 animate-fade-in-up">
         <CardHeader>
           <div className="flex flex-col items-center">
-            <img src="/globe.svg" alt="Pooling App" className="w-16 h-16 mb-2 drop-shadow-lg animate-spin-slow" />
+            <Image src="/globe.svg" alt="Pooling App" width={64} height={64} className="w-16 h-16 mb-2 drop-shadow-lg animate-spin-slow" />
             <h1 className="text-4xl font-extrabold mb-2 text-blue-700 tracking-tight">Pooling App</h1>
             <p className="text-gray-700 text-lg mb-4 text-center">Create, vote, and manage polls with a beautiful, interactive experience.</p>
           </div>
@@ -54,15 +58,42 @@ export default function Home() {
             <form className="flex flex-col gap-4 items-center" onSubmit={handleLogin}>
               <input
                 type="email"
+                name="email"
                 placeholder="Email"
                 className="border rounded px-3 py-2 focus:outline-blue-400 w-full"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); if (message) setMessage(""); }}
                 autoFocus
+                autoComplete="email"
+                required
+                aria-invalid={!!message}
+                aria-describedby={message ? "login-error" : undefined}
+                disabled={isSubmitting}
               />
-              <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white rounded px-6 py-3 font-semibold w-full shadow transition">Login</button>
-              {message && <div className="mt-2 text-red-500 text-sm">{message}</div>}
-              <button type="button" className="text-gray-500 underline mt-2" onClick={() => setShowLogin(false)}>Back</button>
+              <button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700 text-white rounded px-6 py-3 font-semibold w-full shadow transition"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Logging in..." : "Login"}
+              </button>
+              {message && (
+                <div
+                  id="login-error"
+                  className="mt-2 text-red-500 text-sm"
+                  role="alert"
+                  aria-live="polite"
+                >
+                  {message}
+                </div>
+              )}
+              <button
+                type="button"
+                className="text-gray-500 underline mt-2"
+                onClick={() => { setShowLogin(false); setEmail(""); setMessage(""); }}
+              >
+                Back
+              </button>
             </form>
           ) : (
             <div className="flex flex-col gap-4 items-center">

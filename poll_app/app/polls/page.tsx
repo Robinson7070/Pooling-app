@@ -1,23 +1,22 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../lib/authContext";
 import { useEffect } from "react";
 import { Card, CardContent, CardHeader } from "../../components/ui/card";
 import { usePollContext } from "../../lib/pollContext";
+import Link from "next/link";
 
 export default function PollsPage() {
-  const { polls, vote } = usePollContext();
-  const { user, loading } = useAuth();
+  const { polls, vote, user } = usePollContext();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/auth");
+    // Redirect only once we know the user is unauthenticated
+    if (user === null) {
+      router.replace("/auth");
     }
-  }, [user, loading, router]);
-
-  if (loading || !user) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+  }, [user, router]);
+  if (user === undefined) {
+    return <div className="flex justify-center items-center min-h-screen" aria-busy="true">Loading...</div>;
   }
   return (
     <div className="flex flex-col items-center min-h-screen py-10">
@@ -26,7 +25,9 @@ export default function PollsPage() {
         {polls.map((poll) => (
           <Card key={poll.id} className="w-full">
             <CardHeader>
-              <h3 className="text-lg font-semibold">{poll.title}</h3>
+              <Link href={`/polls/${poll.id}`} className="hover:underline">
+                <h3 className="text-lg font-semibold">{poll.title}</h3>
+              </Link>
               <p className="text-gray-600 text-sm">{poll.description}</p>
             </CardHeader>
             <CardContent>
@@ -46,7 +47,18 @@ export default function PollsPage() {
                 ))}
               </div>
               {!user && (
-                <div className="mt-2 text-red-500 text-xs">Login to vote!</div>
+                <>
+                  <div className="mt-2 text-red-500 text-xs">Login to vote!</div>
+                  <div className="mt-4">
+                    <Link 
+                      href={`/polls/${poll.id}`}
+                      className="text-blue-600 hover:underline text-sm"
+                      aria-label={`View details for ${poll.title}`}
+                    >
+                      View Poll Details
+                    </Link>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -55,3 +67,4 @@ export default function PollsPage() {
     </div>
   );
 }
+
