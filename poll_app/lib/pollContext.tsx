@@ -1,25 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState } from "react";
-
-export type Poll = {
-  id: string;
-  title: string;
-  description: string;
-  options: { id: string; text: string; votes: number }[];
-};
-
-export type User = {
-  email: string;
-};
-
-interface PollContextType {
-  user: User | null;
-  login: (email: string) => void;
-  logout: () => void;
-  polls: Poll[];
-  createPoll: (title: string, description: string, options: string[]) => void;
-  vote: (pollId: string, optionId: string) => void;
-}
+import { Poll, User, PollContextType, PollOption } from "./index";
 
 const PollContext = createContext<PollContextType | undefined>(undefined);
 
@@ -41,6 +22,8 @@ export const PollProvider = ({ children }: { children: React.ReactNode }) => {
         { id: "b", text: "Python", votes: 3 },
         { id: "c", text: "TypeScript", votes: 1 },
       ],
+      user_id: "mock-user-1",
+      created_at: "2023-01-01T00:00:00Z"
     },
     {
       id: "2",
@@ -51,22 +34,27 @@ export const PollProvider = ({ children }: { children: React.ReactNode }) => {
         { id: "b", text: "Vue", votes: 2 },
         { id: "c", text: "Angular", votes: 1 },
       ],
+      user_id: "mock-user-1",
+      created_at: "2023-01-02T00:00:00Z"
     },
   ]);
 
-  const login = (email: string) => setUser({ email });
+  const login = (email: string) => setUser({ id: Math.random().toString(36).slice(2), email });
   const logout = () => setUser(null);
 
   const createPoll = (title: string, description: string, options: string[]) => {
-    setPolls((prev) => [
-      ...prev,
-      {
-        id: Math.random().toString(36).slice(2),
-        title,
-        description,
-        options: options.map((text, i) => ({ id: `${i}`, text, votes: 0 })),
-      },
-    ]);
+    if (!user) return;
+    
+    const newPoll: Poll = {
+      id: Math.random().toString(36).slice(2),
+      title,
+      description,
+      options: options.map((text, i) => ({ id: `${i}`, text, votes: 0 })),
+      user_id: user.id,
+      created_at: new Date().toISOString()
+    };
+    
+    setPolls((prev) => [...prev, newPoll]);
   };
 
   const vote = (pollId: string, optionId: string) => {
@@ -84,8 +72,16 @@ export const PollProvider = ({ children }: { children: React.ReactNode }) => {
     );
   };
 
+  const updatePoll = (updatedPoll: Poll) => {
+    setPolls((prev) =>
+      prev.map((poll) =>
+        poll.id === updatedPoll.id ? updatedPoll : poll
+      )
+    );
+  };
+
   return (
-    <PollContext.Provider value={{ user, login, logout, polls, createPoll, vote }}>
+    <PollContext.Provider value={{ user, login, logout, polls, createPoll, vote, updatePoll }}>
       {children}
     </PollContext.Provider>
   );

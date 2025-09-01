@@ -4,7 +4,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '../../../components/ui/card';
 import { usePollContext } from '../../../lib/pollContext';
-import { Poll } from '../../../lib/pollContext';
+import { Poll } from '../../../lib/index';
+import PollResultChart from '../../../components/PollResultChart';
 
 export default function PollDetailPage() {
   const params = useParams();
@@ -53,9 +54,19 @@ export default function PollDetailPage() {
     <div className="flex flex-col items-center min-h-screen py-10">
       <div className="w-full max-w-2xl">
         <Card className="w-full">
-          <CardHeader>
-            <h2 className="text-2xl font-bold">{poll.title}</h2>
-            <p className="text-gray-600">{poll.description}</p>
+          <CardHeader className="flex flex-row justify-between items-start">
+            <div>
+              <h2 className="text-2xl font-bold">{poll.title}</h2>
+              <p className="text-gray-600">{poll.description}</p>
+            </div>
+            {user && user.id === poll.user_id && (
+              <button
+                onClick={() => router.push(`/polls/${poll.id}/edit`)}
+                className="bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium py-1 px-3 rounded text-sm flex items-center"
+              >
+                <span className="mr-1">✏️</span> Edit
+              </button>
+            )}
           </CardHeader>
           <CardContent>
             {!hasVoted ? (
@@ -93,32 +104,25 @@ export default function PollDetailPage() {
                   <p className="font-bold">Thank you for voting!</p>
                   <p>Your vote has been recorded.</p>
                 </div>
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold">Current Results</h3>
-                  {poll.options.map((option) => (
-                    <div key={option.id} className="space-y-1">
-                      <div className="flex justify-between">
-                        <span>{option.text}</span>
-                        <span className="text-gray-500">{option.votes} votes</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div
-                          className="bg-blue-600 h-2.5 rounded-full"
-                          style={{
-                            width: `${poll.options.reduce((sum, opt) => sum + opt.votes, 0) > 0 ? 
-                              (option.votes / poll.options.reduce((sum, opt) => sum + opt.votes, 0)) * 100 : 0}%`,
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                  ))}
+                
+                {/* Poll Results Chart */}
+                <PollResultChart poll={poll} />
+                <div className="flex flex-col space-y-2">
+                  <button
+                    onClick={() => router.push('/polls')}
+                    className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded"
+                  >
+                    Back to Polls
+                  </button>
+                  {user && user.id === poll.user_id && (
+                    <button
+                      onClick={() => router.push(`/polls/${poll.id}/edit`)}
+                      className="w-full bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-2 px-4 rounded"
+                    >
+                      Edit Poll
+                    </button>
+                  )}
                 </div>
-                <button
-                  onClick={() => router.push('/polls')}
-                  className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded"
-                >
-                  Back to Polls
-                </button>
               </div>
             )}
           </CardContent>

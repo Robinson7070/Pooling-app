@@ -1,9 +1,10 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader } from "../../components/ui/card";
 import { usePollContext } from "../../lib/pollContext";
 import Link from "next/link";
+import PollResultChart from "../../components/PollResultChart";
 
 export default function PollsPage() {
   const { polls, vote, user } = usePollContext();
@@ -31,20 +32,28 @@ export default function PollsPage() {
               <p className="text-gray-600 text-sm">{poll.description}</p>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col gap-2">
-                {poll.options.map((opt) => (
-                  <div key={opt.id} className="flex items-center justify-between">
-                    <span>{opt.text}</span>
-                    <span className="text-xs text-gray-500">Votes: {opt.votes}</span>
-                    <button
-                      className="ml-2 bg-blue-600 text-white rounded px-2 py-1 text-xs"
-                      disabled={!user}
-                      onClick={() => vote(poll.id, opt.id)}
-                    >
-                      Vote
-                    </button>
-                  </div>
-                ))}
+              <div className="flex flex-col gap-4">
+                {/* Poll options with vote buttons */}
+                <div className="flex flex-col gap-2">
+                  {poll.options.map((opt) => (
+                    <div key={opt.id} className="flex items-center justify-between">
+                      <span>{opt.text}</span>
+                      <div className="flex items-center">
+                        <span className="text-xs text-gray-500 mr-2">Votes: {opt.votes}</span>
+                        <button
+                          className="bg-blue-600 text-white rounded px-2 py-1 text-xs"
+                          disabled={!user}
+                          onClick={() => vote(poll.id, opt.id)}
+                        >
+                          Vote
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Poll Results Chart */}
+                <PollResultChart poll={poll} className="mt-4" />
               </div>
               {!user && (
                 <>
