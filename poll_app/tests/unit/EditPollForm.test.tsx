@@ -80,7 +80,7 @@ describe('EditPollForm', () => {
     );
 
     // Submit the form
-    fireEvent.click(screen.getByText(/Save Changes/i));
+    fireEvent.click(screen.getByText(/Update Poll/i));
     
     // Check if onSubmit was called
     expect(mockOnSubmit).toHaveBeenCalledTimes(1);

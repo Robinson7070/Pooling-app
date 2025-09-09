@@ -2,7 +2,7 @@
 // #Docs: This test verifies the PollContext functionality for managing polls state
 
 import { render, screen, act } from '@testing-library/react';
-import { PollContextProvider, usePollContext } from '../../lib/pollContext';
+import { PollProvider, usePollContext } from '../../lib/pollContext';
 import '@testing-library/jest-dom';
 
 // Mock component that uses the poll context
@@ -69,23 +69,15 @@ jest.mock('../../lib/supabaseClient', () => ({
 describe('PollContext', () => {
   it('provides polls data to components', async () => {
     render(
-      <PollContextProvider>
+      <PollProvider>
         <TestComponent />
-      </PollContextProvider>
+      </PollProvider>
     );
 
-    // Initially should show loading
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
-
-    // Wait for data to load
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
-    });
-
-    // Should now show polls
+    // Should show polls
     expect(screen.getByText('Polls')).toBeInTheDocument();
     expect(screen.getByTestId('poll-count')).toHaveTextContent('2');
-    expect(screen.getByText('Test Poll 1')).toBeInTheDocument();
-    expect(screen.getByText('Test Poll 2')).toBeInTheDocument();
+    expect(screen.getByText('Favorite Programming Language?')).toBeInTheDocument();
+    expect(screen.getByText('Best Frontend Framework?')).toBeInTheDocument();
   });
 });

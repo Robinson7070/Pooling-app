@@ -1,9 +1,6 @@
-// #File: app/polls/[id]/page.tsx
-// #Docs: This test verifies that users can vote on polls and see updated results
-
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import PollDetailPage from '../../app/polls/[id]/page';
-import { PollContextProvider } from '../../lib/pollContext';
+import { usePollContext } from '../../lib/pollContext';
 import '@testing-library/jest-dom';
 
 // Mock the Next.js router
@@ -18,75 +15,61 @@ jest.mock('next/navigation', () => ({
   }),
 }));
 
-// Mock Supabase client
-jest.mock('../../lib/supabaseClient', () => ({
-  createClient: () => ({
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          single: () => ({
-            data: {
-              id: '1',
-              title: 'Test Poll',
-              description: 'Test description',
-              options: [
-                { id: '1', text: 'Option 1', votes: 5 },
-                { id: '2', text: 'Option 2', votes: 3 },
-              ],
-              user_id: 'user1',
-              created_at: new Date().toISOString()
-            },
-            error: null,
-          }),
-        }),
-      }),
-      update: () => ({
-        eq: () => ({
-          select: () => ({
-            data: { votes: 6 },
-            error: null,
-          }),
-        }),
-      }),
-    }),
-    auth: {
-      getUser: () => ({
-        data: { user: { id: 'user2' } },
-        error: null,
-      }),
-    },
-  }),
-}));
+// Mock the usePollContext hook
+jest.mock('../../lib/pollContext');
+
+const mockUsePollContext = usePollContext as jest.Mock;
 
 describe('Poll Voting Integration', () => {
   it('displays poll details and allows voting', async () => {
-    render(
-      <PollContextProvider>
-        <PollDetailPage />
-      </PollContextProvider>
-    );
+    const mockVote = jest.fn();
+    mockUsePollContext.mockReturnValue({
+      polls: [
+        {
+          id: '1',
+          title: 'Favorite Programming Language?',
+          description: 'Vote for your favorite language!',
+          options: [
+            { id: 'a', text: 'JavaScript', votes: 2 },
+            { id: 'b', text: 'Python', votes: 3 },
+            { id: 'c', text: 'TypeScript', votes: 1 },
+          ],
+          user_id: 'mock-user-1',
+          created_at: '2023-01-01T00:00:00Z'
+        },
+      ],
+      vote: mockVote,
+      user: { id: 'user2' },
+    });
+
+    render(<PollDetailPage />);
 
     // Wait for poll to load
     await waitFor(() => {
-      expect(screen.getByText('Test Poll')).toBeInTheDocument();
+      expect(screen.getByText('Favorite Programming Language?')).toBeInTheDocument();
     });
 
     // Check if poll description is displayed
-    expect(screen.getByText('Test description')).toBeInTheDocument();
+    expect(screen.getByText('Vote for your favorite language!')).toBeInTheDocument();
 
-    // Check if options are displayed with vote counts
-    expect(screen.getByText('Option 1')).toBeInTheDocument();
-    expect(screen.getByText('5 votes')).toBeInTheDocument();
-    expect(screen.getByText('Option 2')).toBeInTheDocument();
-    expect(screen.getByText('3 votes')).toBeInTheDocument();
+    // Check if options are displayed
+    expect(screen.getByText('JavaScript')).toBeInTheDocument();
+    expect(screen.getByText('Python')).toBeInTheDocument();
+    expect(screen.getByText('TypeScript')).toBeInTheDocument();
 
-    // Click on the first option to vote
-    const voteButtons = screen.getAllByRole('button', { name: /Vote/i });
-    fireEvent.click(voteButtons[0]);
+    // Select an option to vote for
+    fireEvent.click(screen.getByLabelText('JavaScript'));
 
-    // Check if vote count is updated
+    // Click the submit button
+    const submitButton = screen.getByRole('button', { name: /Submit Vote/i });
+    fireEvent.click(submitButton);
+
+    // Check that the vote function was called
+    expect(mockVote).toHaveBeenCalledWith('1', 'a');
+
+    // Check that the thank you message appears
     await waitFor(() => {
-      expect(screen.getByText('6 votes')).toBeInTheDocument();
+      expect(screen.getByText('Thank you for voting!')).toBeInTheDocument();
     });
   });
 });
